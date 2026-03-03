@@ -6,3 +6,4 @@ pub mod swap;
 pub mod update_fee;
 
 pub use initialize::*;
+pub use initialize_pool::*;

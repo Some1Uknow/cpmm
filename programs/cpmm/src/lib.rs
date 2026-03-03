@@ -1,13 +1,12 @@
 use anchor_lang::prelude::*;
 
-pub mod errors;
 pub mod constants;
+pub mod errors;
 pub mod instructions;
 pub mod state;
 pub mod utils;
 
 pub use constants::*;
-pub use errors::*;
 pub use instructions::*;
 pub use state::*;
 pub use utils::*;
@@ -19,6 +18,10 @@ pub mod cpmm {
     use super::*;
 
     pub fn initialize(ctx: Context<Initialize>) -> Result<()> {
-        initialize::handler(ctx)
+        initialize::initialize_handler(ctx)
+    }
+
+    pub fn initialize_pool(ctx: Context<InitializePool>, fee_bps: u16) -> Result<()> {
+        initialize_pool::initialize_pool_handler(ctx, fee_bps)
     }
 }

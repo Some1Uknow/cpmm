@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 
-use crate::errors::CpmmError;
+use crate::errors::Error;
 
 pub fn order_mints(a: Pubkey, b: Pubkey) -> (Pubkey, Pubkey) {
     if a.to_bytes() < b.to_bytes() {
@@ -11,10 +11,10 @@ pub fn order_mints(a: Pubkey, b: Pubkey) -> (Pubkey, Pubkey) {
 }
 
 pub fn require_canonical_mints(mint_x: Pubkey, mint_y: Pubkey) -> Result<()> {
-    require_keys_neq!(mint_x, mint_y, CpmmError::IdenticalMints);
+    require_keys_neq!(mint_x, mint_y, Error::IdenticalMints);
     require!(
         mint_x.to_bytes() < mint_y.to_bytes(),
-        CpmmError::NonCanonicalMintOrder
+        Error::NonCanonicalMintOrder
     );
     Ok(())
 }
