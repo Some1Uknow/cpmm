@@ -8,4 +8,8 @@ pub enum Error {
     NonCanonicalMintOrder,
     #[msg("Fee tier is not allowed")]
     InvalidFeeTier,
+    #[msg("Vault owner must be the pool PDA")]
+    InvalidVaultOwner,
+    #[msg("Vault mint does not match expected pool mint")]
+    InvalidVaultMint,
 }
