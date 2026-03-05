@@ -18,19 +18,3 @@ pub fn require_pool_vault_invariants(
 
     Ok(())
 }
-
-pub fn require_liquidity_invariants(
-    pool: &crate::state::Pool,
-    lp_mint: Pubkey,
-    mint_x: Pubkey,
-    mint_y: Pubkey,
-    vault_x: Pubkey,
-    vault_y: Pubkey,
-) -> Result<()> {
-    require_keys_eq!(lp_mint, pool.lp_mint);
-    require_keys_eq!(vault_x, pool.vault_x);
-    require_keys_eq!(vault_y, pool.vault_y);
-    require_keys_eq!(mint_x, pool.token_mint_x);
-    require_keys_eq!(mint_y, pool.token_mint_y);
-    Ok(())
-}

@@ -12,4 +12,14 @@ pub enum Error {
     InvalidVaultOwner,
     #[msg("Vault mint does not match expected pool mint")]
     InvalidVaultMint,
+    #[msg("Liquidity amounts must be greater than zero")]
+    InvalidLiquidityAmount,
+    #[msg("Minimum LP output must be greater than zero")]
+    InvalidMinLpOut,
+    #[msg("Math overflow")]
+    MathOverflow,
+    #[msg("Slippage exceeded minimum LP out")]
+    SlippageExceeded,
+    #[msg("Non-bootstrap add liquidity is not implemented yet")]
+    NonBootstrapNotImplemented,
 }

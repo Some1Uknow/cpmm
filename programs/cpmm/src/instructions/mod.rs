@@ -7,3 +7,4 @@ pub mod update_fee;
 
 pub use initialize::*;
 pub use initialize_pool::*;
+pub use add_liquidity::*;

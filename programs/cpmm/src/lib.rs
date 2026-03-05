@@ -24,4 +24,13 @@ pub mod cpmm {
     pub fn initialize_pool(ctx: Context<InitializePool>, fee_bps: u16) -> Result<()> {
         initialize_pool::initialize_pool_handler(ctx, fee_bps)
     }
+
+    pub fn add_liquidity(
+        ctx: Context<AddLiquidity>,
+        amount_x: u64,
+        amount_y: u64,
+        min_lp_out: u64,
+    ) -> Result<()> {
+        add_liquidity::add_liquidity_handler(ctx, amount_x, amount_y, min_lp_out)
+    }
 }
