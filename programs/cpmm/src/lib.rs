@@ -27,10 +27,15 @@ pub mod cpmm {
 
     pub fn add_liquidity(
         ctx: Context<AddLiquidity>,
-        amount_x: u64,
-        amount_y: u64,
-        min_lp_out: u64,
+        max_token_x_in: u64,
+        max_token_y_in: u64,
+        min_lp_shares_out: u64,
     ) -> Result<()> {
-        add_liquidity::add_liquidity_handler(ctx, amount_x, amount_y, min_lp_out)
+        add_liquidity::add_liquidity_handler(
+            ctx,
+            max_token_x_in,
+            max_token_y_in,
+            min_lp_shares_out,
+        )
     }
 }

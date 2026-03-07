@@ -1,35 +1,91 @@
 use crate::{
     errors::Error,
     state::Pool,
-    utils::{compute_bootstrap_lp_to_mint, validate_add_liquidity_inputs},
+    utils::{compute_lp_shares_and_token_deposit_amounts, validate_add_liquidity_inputs},
     POOL_SEED,
 };
 use anchor_lang::prelude::*;
-use anchor_spl::token_interface::{Mint, TokenAccount, TokenInterface};
+use anchor_spl::token_interface::{
+    self, Mint, MintTo, TokenAccount, TokenInterface, TransferChecked,
+};
 
 pub fn add_liquidity_handler(
     ctx: Context<AddLiquidity>,
-    amount_x: u64,
-    amount_y: u64,
-    min_lp_out: u64,
+    max_token_x_in: u64,
+    max_token_y_in: u64,
+    min_lp_shares_out: u64,
 ) -> Result<()> {
-    validate_add_liquidity_inputs(amount_x, amount_y, min_lp_out)?;
+    validate_add_liquidity_inputs(max_token_x_in, max_token_y_in, min_lp_shares_out)?;
 
-    let reserve_x = ctx.accounts.vault_x.amount;
-    let reserve_y = ctx.accounts.vault_y.amount;
+    let token_x_reserve = ctx.accounts.vault_x.amount;
+    let token_y_reserve = ctx.accounts.vault_y.amount;
 
-    let lp_to_mint = compute_bootstrap_lp_to_mint(reserve_x, reserve_y, amount_x, amount_y)?;
+    let total_lp_shares_supply = ctx.accounts.lp_mint.supply;
 
-    require!(lp_to_mint >= min_lp_out, Error::SlippageExceeded);
+    let (lp_shares_to_mint, token_x_to_deposit, token_y_to_deposit) =
+        compute_lp_shares_and_token_deposit_amounts(
+            token_x_reserve,
+            token_y_reserve,
+            total_lp_shares_supply,
+            max_token_x_in,
+            max_token_y_in,
+        )?;
+    require!(lp_shares_to_mint >= min_lp_shares_out, Error::SlippageExceeded);
 
-    msg!(
-        "bootstrap add_liquidity: reserve_x={}, reserve_y={}, lp_to_mint={}",
-        reserve_x,
-        reserve_y,
-        lp_to_mint
+    let pool_bump = ctx.accounts.pool.bump;
+
+    let token_x_binding = ctx.accounts.token_mint_x.key();
+    let token_y_binding = ctx.accounts.token_mint_y.key();
+
+    let signer_seeds: &[&[u8]] = &[
+        POOL_SEED,
+        token_x_binding.as_ref(),
+        token_y_binding.as_ref(),
+        &[pool_bump],
+    ];
+    let signer = &[signer_seeds];
+
+    let mint_to_lp = MintTo {
+        mint: ctx.accounts.lp_mint.to_account_info(),
+        to: ctx.accounts.user_lp_mint_ata.to_account_info(),
+        authority: ctx.accounts.pool.to_account_info(),
+    };
+
+    let cpi_ctx_mint_lp = CpiContext::new_with_signer(
+        ctx.accounts.token_program.to_account_info(),
+        mint_to_lp,
+        signer,
     );
 
-    msg!("reserve_x={}, reserve_y={}", reserve_x, reserve_y);
+    token_interface::mint_to(cpi_ctx_mint_lp, lp_shares_to_mint)?;
+
+    let transfer_x = TransferChecked {
+        from: ctx.accounts.user_token_x_ata.to_account_info(),
+        to: ctx.accounts.vault_x.to_account_info(),
+        mint: ctx.accounts.token_mint_x.to_account_info(),
+        authority: ctx.accounts.signer.to_account_info(),
+    };
+
+    let transfer_y = TransferChecked {
+        from: ctx.accounts.user_token_y_ata.to_account_info(),
+        to: ctx.accounts.vault_y.to_account_info(),
+        mint: ctx.accounts.token_mint_y.to_account_info(),
+        authority: ctx.accounts.signer.to_account_info(),
+    };
+
+    let cpi_ctx_x = CpiContext::new(ctx.accounts.token_program.to_account_info(), transfer_x);
+    let cpi_ctx_y = CpiContext::new(ctx.accounts.token_program.to_account_info(), transfer_y);
+
+    token_interface::transfer_checked(
+        cpi_ctx_x,
+        token_x_to_deposit,
+        ctx.accounts.token_mint_x.decimals,
+    )?;
+    token_interface::transfer_checked(
+        cpi_ctx_y,
+        token_y_to_deposit,
+        ctx.accounts.token_mint_y.decimals,
+    )?;
 
     Ok(())
 }
