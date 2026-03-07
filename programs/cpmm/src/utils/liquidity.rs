@@ -230,3 +230,50 @@ pub fn compute_lp_shares_and_token_deposit_amounts(
         token_y_to_deposit as u64,
     ))
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn bootstrap_mints_geometric_mean_and_uses_full_budget() {
+        let (lp_shares_to_mint, token_x_to_deposit, token_y_to_deposit) =
+            compute_lp_shares_and_token_deposit_amounts(0, 0, 0, 100, 400).unwrap();
+
+        assert_eq!(lp_shares_to_mint, 200);
+        assert_eq!(token_x_to_deposit, 100);
+        assert_eq!(token_y_to_deposit, 400);
+    }
+
+    #[test]
+    fn bootstrap_rejects_non_zero_lp_supply() {
+        let result =
+            compute_lp_shares_and_token_deposit_amounts(0, 0, 1, 100, 400);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn non_bootstrap_uses_limiting_side_and_preserves_ratio() {
+        let (lp_shares_to_mint, token_x_to_deposit, token_y_to_deposit) =
+            compute_lp_shares_and_token_deposit_amounts(1_000, 2_000, 100, 100, 300)
+                .unwrap();
+
+        assert_eq!(lp_shares_to_mint, 10);
+        assert_eq!(token_x_to_deposit, 100);
+        assert_eq!(token_y_to_deposit, 200);
+    }
+
+    #[test]
+    fn non_bootstrap_rejects_one_sided_zero_reserve() {
+        let result =
+            compute_lp_shares_and_token_deposit_amounts(1_000, 0, 100, 100, 100);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn non_bootstrap_rejects_zero_lp_supply() {
+        let result =
+            compute_lp_shares_and_token_deposit_amounts(1_000, 2_000, 0, 100, 200);
+        assert!(result.is_err());
+    }
+}
