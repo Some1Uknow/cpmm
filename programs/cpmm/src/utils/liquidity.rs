@@ -140,9 +140,14 @@ pub fn compute_lp_shares_and_token_deposit_amounts(
     max_token_y_in: u64,
 ) -> Result<(u64, u64, u64)> {
     /*
-    Bootstrap branch: pool empty, so consume full provided amounts.
+    Bootstrap branch: pool empty and LP supply must be zero.
     */
     if token_x_reserve == 0 && token_y_reserve == 0 {
+        require!(
+            total_lp_shares_supply == 0,
+            Error::InvalidPoolLiquidityState
+        );
+
         let deposit_product = (max_token_x_in as u128)
             .checked_mul(max_token_y_in as u128)
             .ok_or(Error::MathOverflow)?;
@@ -152,11 +157,22 @@ pub fn compute_lp_shares_and_token_deposit_amounts(
     }
 
     /*
-    Non-bootstrap requires initialized reserves and LP supply.
+    Any one-sided-zero reserve is an invalid pool state.
+    Example invalid states:
+    - token_x_reserve == 0 && token_y_reserve > 0
+    - token_x_reserve > 0 && token_y_reserve == 0
     */
     require!(
-        token_x_reserve > 0 && token_y_reserve > 0 && total_lp_shares_supply > 0,
-        Error::MathOverflow
+        token_x_reserve > 0 && token_y_reserve > 0,
+        Error::InvalidPoolLiquidityState
+    );
+
+    /*
+    Non-bootstrap requires positive LP supply.
+    */
+    require!(
+        total_lp_shares_supply > 0,
+        Error::InvalidPoolLiquidityState
     );
 
     /*

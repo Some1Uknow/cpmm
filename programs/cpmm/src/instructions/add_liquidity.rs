@@ -30,7 +30,11 @@ pub fn add_liquidity_handler(
             max_token_x_in,
             max_token_y_in,
         )?;
-    require!(lp_shares_to_mint >= min_lp_shares_out, Error::SlippageExceeded);
+
+    require!(
+        lp_shares_to_mint >= min_lp_shares_out,
+        Error::SlippageExceeded
+    );
 
     let pool_bump = ctx.accounts.pool.bump;
 
@@ -107,7 +111,13 @@ pub struct AddLiquidity<'info> {
     #[account(address = pool.token_mint_y)]
     pub token_mint_y: InterfaceAccount<'info, Mint>,
 
-    #[account(address = pool.lp_mint)]
+    #[account(
+        mut,
+        address = pool.lp_mint,
+        mint::authority = pool,
+        mint::token_program = token_program,
+        constraint = lp_mint.freeze_authority.is_none() @ Error::InvalidLpMintFreezeAuthority
+    )]
     pub lp_mint: InterfaceAccount<'info, Mint>,
 
     #[account(mut, address = pool.vault_x, token::token_program = token_program)]

@@ -18,8 +18,12 @@ pub enum Error {
     InvalidMinLpOut,
     #[msg("Math overflow")]
     MathOverflow,
+    #[msg("Pool liquidity state is invalid")]
+    InvalidPoolLiquidityState,
     #[msg("Slippage exceeded minimum LP out")]
     SlippageExceeded,
     #[msg("Non-bootstrap add liquidity is not implemented yet")]
     NonBootstrapNotImplemented,
+    #[msg("LP mint must have no freeze authority")]
+    InvalidLpMintFreezeAuthority,
 }
