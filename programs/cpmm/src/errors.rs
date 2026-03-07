@@ -26,4 +26,12 @@ pub enum Error {
     NonBootstrapNotImplemented,
     #[msg("LP mint must have no freeze authority")]
     InvalidLpMintFreezeAuthority,
+    #[msg("Swap amount must be greater than zero")]
+    InvalidSwapAmount,
+    #[msg("Swap token accounts do not match pool mints")]
+    InvalidSwapTokenAccount,
+    #[msg("Swap output amount is too low")]
+    InsufficientSwapOutput,
+    #[msg("Swap output exceeds allowed slippage")]
+    SwapSlippageExceeded,
 }

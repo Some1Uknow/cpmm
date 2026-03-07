@@ -5,6 +5,7 @@ pub mod remove_liquidity;
 pub mod swap;
 pub mod update_fee;
 
+pub use add_liquidity::*;
 pub use initialize::*;
 pub use initialize_pool::*;
-pub use add_liquidity::*;
+pub use swap::*;

@@ -2,15 +2,17 @@ import { assert } from "chai";
 import { program, provider, payer } from "../helpers/workspace";
 import { web3, BN } from "@coral-xyz/anchor";
 import {
-  createAssociatedTokenAccount,
-  createMint,
   getAccount,
   getMint,
   getAssociatedTokenAddressSync,
-  mintTo,
   ASSOCIATED_TOKEN_PROGRAM_ID,
   TOKEN_PROGRAM_ID,
 } from "@solana/spl-token";
+import {
+  createAssociatedTokenAccount,
+  createMint,
+  mintTo,
+} from "../helpers/token";
 
 describe("integration: add_liquidity", () => {
   it("adds bootstrap liquidity and mints expected LP shares", async () => {

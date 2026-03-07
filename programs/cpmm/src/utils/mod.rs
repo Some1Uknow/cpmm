@@ -2,6 +2,7 @@ pub mod fees;
 pub mod liquidity;
 pub mod mints;
 pub mod pool_checks;
+pub mod swap;
 
 pub use fees::*;
 pub use liquidity::*;

@@ -2,13 +2,13 @@ import { assert } from "chai";
 import { program, provider, payer } from "../helpers/workspace";
 import { web3 } from "@coral-xyz/anchor";
 import {
-  createMint,
   getAssociatedTokenAddressSync,
   TOKEN_PROGRAM_ID,
   ASSOCIATED_TOKEN_PROGRAM_ID,
   getAccount,
   getMint,
 } from "@solana/spl-token";
+import { createMint } from "../helpers/token";
 
 describe("integration: initialize_pool", () => {
   it("initialize pool and store its state", async () => {

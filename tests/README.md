@@ -6,13 +6,13 @@ This project uses a 3-layer setup:
 - Location: `programs/cpmm/src/**` with `#[cfg(test)]`.
 - Purpose: fast deterministic math and state checks.
 
-2. TypeScript integration tests
+2. TypeScript integration tests on LiteSVM
 - Location: `tests/integration/**/*.test.ts`.
-- Purpose: RPC + instruction wiring checks against local validator.
+- Purpose: instruction/account flow checks without a local validator.
 
-3. TypeScript e2e smoke tests
+3. TypeScript smoke tests on LiteSVM
 - Location: `tests/e2e/**/*.test.ts`.
-- Purpose: full end-to-end transaction confirmation path.
+- Purpose: lightweight program/client smoke coverage.
 
 ## Commands
 
@@ -22,8 +22,7 @@ anchor build
 cargo test -p cpmm
 ```
 
-2. Full TypeScript test run (integration + e2e)
+2. Full TypeScript test run on LiteSVM
 ```bash
-anchor test
+yarn test
 ```
-
