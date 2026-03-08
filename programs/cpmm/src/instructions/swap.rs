@@ -4,7 +4,7 @@ use crate::{
     state::Pool,
     utils::{
         compute_swap_output_exact_input, resolve_swap_direction_and_reserves,
-        validate_swap_exact_input_params,
+        transfer_tokens_from_pool, transfer_tokens_from_user, validate_swap_exact_input_params,
     },
 };
 use anchor_lang::prelude::*;
@@ -20,26 +20,50 @@ pub struct Swap<'info> {
     #[account(address = pool.token_mint_y)]
     pub token_mint_y: InterfaceAccount<'info, Mint>,
 
-    #[account(mut,
+    #[account(
+        mut,
         seeds = [POOL_SEED, token_mint_x.key().as_ref(), token_mint_y.key().as_ref()],
-        bump
+        bump = pool.bump
     )]
     pub pool: Account<'info, Pool>,
 
-    #[account(mut,
-     address = pool.vault_x, token::token_program = token_program
+    #[account(
+        mut,
+        constraint = input_vault.key() == pool.vault_x || input_vault.key() == pool.vault_y
+            @ Error::InvalidSwapTokenAccount,
+        token::token_program = token_program
     )]
-    pub vault_x: InterfaceAccount<'info, TokenAccount>,
+    pub input_vault: InterfaceAccount<'info, TokenAccount>,
 
-    #[account(mut,
-     address = pool.vault_y, token::token_program = token_program
+    #[account(
+        mut,
+        constraint = output_vault.key() == pool.vault_x || output_vault.key() == pool.vault_y
+            @ Error::InvalidSwapTokenAccount,
+        constraint = output_vault.key() != input_vault.key() @ Error::InvalidSwapTokenAccount,
+        token::token_program = token_program
     )]
-    pub vault_y: InterfaceAccount<'info, TokenAccount>,
+    pub output_vault: InterfaceAccount<'info, TokenAccount>,
 
-    #[account(mut, token::authority = signer, token::token_program = token_program)]
+    #[account(address = input_vault.mint)]
+    pub input_token_mint: InterfaceAccount<'info, Mint>,
+
+    #[account(address = output_vault.mint)]
+    pub output_token_mint: InterfaceAccount<'info, Mint>,
+
+    #[account(
+        mut,
+        token::mint = input_token_mint,
+        token::authority = signer,
+        token::token_program = token_program
+    )]
     pub user_input_ata: InterfaceAccount<'info, TokenAccount>,
 
-    #[account(mut, token::authority = signer, token::token_program = token_program)]
+    #[account(
+        mut,
+        token::mint = output_token_mint,
+        token::authority = signer,
+        token::token_program = token_program
+    )]
     pub user_output_ata: InterfaceAccount<'info, TokenAccount>,
 
     pub token_program: Interface<'info, TokenInterface>,
@@ -49,13 +73,13 @@ pub fn swap_handler(ctx: Context<Swap>, amount_in: u64, min_amount_out: u64) -> 
     validate_swap_exact_input_params(amount_in, min_amount_out)?;
 
     let resolved_swap = resolve_swap_direction_and_reserves(
-        ctx.accounts.user_input_ata.mint,
-        ctx.accounts.user_output_ata.mint,
-        ctx.accounts.token_mint_x.key(),
-        ctx.accounts.token_mint_y.key(),
-        ctx.accounts.vault_x.amount,
-        ctx.accounts.vault_y.amount,
-    )?; 
+        ctx.accounts.input_vault.key(),
+        ctx.accounts.output_vault.key(),
+        ctx.accounts.pool.vault_x,
+        ctx.accounts.pool.vault_y,
+        ctx.accounts.input_vault.amount,
+        ctx.accounts.output_vault.amount,
+    )?;
 
     let (amount_out, _fee_amount) = compute_swap_output_exact_input(
         resolved_swap.input_reserve,
@@ -66,6 +90,39 @@ pub fn swap_handler(ctx: Context<Swap>, amount_in: u64, min_amount_out: u64) -> 
 
     require!(amount_out >= min_amount_out, Error::SwapSlippageExceeded);
 
+    let pool_bump = ctx.accounts.pool.bump;
+
+    let token_x_binding = ctx.accounts.token_mint_x.key();
+    let token_y_binding = ctx.accounts.token_mint_y.key();
+
+    let signer_seeds: &[&[u8]] = &[
+        POOL_SEED,
+        token_x_binding.as_ref(),
+        token_y_binding.as_ref(),
+        &[pool_bump],
+    ];
+    let signer = &[signer_seeds];
+
+    transfer_tokens_from_user(
+        ctx.accounts.user_input_ata.to_account_info(),
+        ctx.accounts.input_vault.to_account_info(),
+        ctx.accounts.input_token_mint.to_account_info(),
+        ctx.accounts.signer.to_account_info(),
+        ctx.accounts.token_program.to_account_info(),
+        amount_in,
+        ctx.accounts.input_token_mint.decimals,
+    )?;
+
+    transfer_tokens_from_pool(
+        ctx.accounts.output_vault.to_account_info(),
+        ctx.accounts.user_output_ata.to_account_info(),
+        ctx.accounts.output_token_mint.to_account_info(),
+        ctx.accounts.pool.to_account_info(),
+        ctx.accounts.token_program.to_account_info(),
+        signer,
+        amount_out,
+        ctx.accounts.output_token_mint.decimals,
+    )?;
 
     Ok(())
 }

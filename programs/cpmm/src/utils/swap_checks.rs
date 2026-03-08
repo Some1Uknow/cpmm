@@ -25,26 +25,26 @@ pub fn validate_swap_exact_input_params(
 }
 
 pub fn resolve_swap_direction_and_reserves(
-    input_mint: Pubkey,
-    output_mint: Pubkey,
-    pool_mint_x: Pubkey,
-    pool_mint_y: Pubkey,
-    vault_x_reserve: u64,
-    vault_y_reserve: u64,
+    input_vault: Pubkey,
+    output_vault: Pubkey,
+    pool_vault_x: Pubkey,
+    pool_vault_y: Pubkey,
+    input_vault_reserve: u64,
+    output_vault_reserve: u64,
 ) -> Result<ResolvedSwapDirection> {
-    require!(input_mint != output_mint, Error::InvalidSwapTokenAccount);
+    require!(input_vault != output_vault, Error::InvalidSwapTokenAccount);
 
-    let resolved = if input_mint == pool_mint_x && output_mint == pool_mint_y {
+    let resolved = if input_vault == pool_vault_x && output_vault == pool_vault_y {
         ResolvedSwapDirection {
             direction: SwapDirection::XToY,
-            input_reserve: vault_x_reserve,
-            output_reserve: vault_y_reserve,
+            input_reserve: input_vault_reserve,
+            output_reserve: output_vault_reserve,
         }
-    } else if input_mint == pool_mint_y && output_mint == pool_mint_x {
+    } else if input_vault == pool_vault_y && output_vault == pool_vault_x {
         ResolvedSwapDirection {
             direction: SwapDirection::YToX,
-            input_reserve: vault_y_reserve,
-            output_reserve: vault_x_reserve,
+            input_reserve: input_vault_reserve,
+            output_reserve: output_vault_reserve,
         }
     } else {
         return err!(Error::InvalidSwapTokenAccount);
