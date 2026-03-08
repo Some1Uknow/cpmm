@@ -1,13 +1,14 @@
 use crate::{
     errors::Error,
     state::Pool,
-    utils::{compute_lp_shares_and_token_deposit_amounts, validate_add_liquidity_inputs},
+    utils::{
+        compute_lp_shares_and_token_deposit_amounts, mint_tokens_with_signer,
+        transfer_tokens_from_user, validate_add_liquidity_inputs,
+    },
     POOL_SEED,
 };
 use anchor_lang::prelude::*;
-use anchor_spl::token_interface::{
-    self, Mint, MintTo, TokenAccount, TokenInterface, TransferChecked,
-};
+use anchor_spl::token_interface::{Mint, TokenAccount, TokenInterface};
 
 pub fn add_liquidity_handler(
     ctx: Context<AddLiquidity>,
@@ -49,44 +50,31 @@ pub fn add_liquidity_handler(
     ];
     let signer = &[signer_seeds];
 
-    let mint_to_lp = MintTo {
-        mint: ctx.accounts.lp_mint.to_account_info(),
-        to: ctx.accounts.user_lp_mint_ata.to_account_info(),
-        authority: ctx.accounts.pool.to_account_info(),
-    };
-
-    let cpi_ctx_mint_lp = CpiContext::new_with_signer(
+    mint_tokens_with_signer(
+        ctx.accounts.lp_mint.to_account_info(),
+        ctx.accounts.user_lp_mint_ata.to_account_info(),
+        ctx.accounts.pool.to_account_info(),
         ctx.accounts.token_program.to_account_info(),
-        mint_to_lp,
         signer,
-    );
+        lp_shares_to_mint,
+    )?;
 
-    token_interface::mint_to(cpi_ctx_mint_lp, lp_shares_to_mint)?;
-
-    let transfer_x = TransferChecked {
-        from: ctx.accounts.user_token_x_ata.to_account_info(),
-        to: ctx.accounts.vault_x.to_account_info(),
-        mint: ctx.accounts.token_mint_x.to_account_info(),
-        authority: ctx.accounts.signer.to_account_info(),
-    };
-
-    let transfer_y = TransferChecked {
-        from: ctx.accounts.user_token_y_ata.to_account_info(),
-        to: ctx.accounts.vault_y.to_account_info(),
-        mint: ctx.accounts.token_mint_y.to_account_info(),
-        authority: ctx.accounts.signer.to_account_info(),
-    };
-
-    let cpi_ctx_x = CpiContext::new(ctx.accounts.token_program.to_account_info(), transfer_x);
-    let cpi_ctx_y = CpiContext::new(ctx.accounts.token_program.to_account_info(), transfer_y);
-
-    token_interface::transfer_checked(
-        cpi_ctx_x,
+    transfer_tokens_from_user(
+        ctx.accounts.user_token_x_ata.to_account_info(),
+        ctx.accounts.vault_x.to_account_info(),
+        ctx.accounts.token_mint_x.to_account_info(),
+        ctx.accounts.signer.to_account_info(),
+        ctx.accounts.token_program.to_account_info(),
         token_x_to_deposit,
         ctx.accounts.token_mint_x.decimals,
     )?;
-    token_interface::transfer_checked(
-        cpi_ctx_y,
+
+    transfer_tokens_from_user(
+        ctx.accounts.user_token_y_ata.to_account_info(),
+        ctx.accounts.vault_y.to_account_info(),
+        ctx.accounts.token_mint_y.to_account_info(),
+        ctx.accounts.signer.to_account_info(),
+        ctx.accounts.token_program.to_account_info(),
         token_y_to_deposit,
         ctx.accounts.token_mint_y.decimals,
     )?;

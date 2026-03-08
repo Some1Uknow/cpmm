@@ -1,4 +1,12 @@
-use crate::{constants::POOL_SEED, errors::Error, state::Pool};
+use crate::{
+    constants::POOL_SEED,
+    errors::Error,
+    state::Pool,
+    utils::{
+        compute_swap_output_exact_input, resolve_swap_direction_and_reserves,
+        validate_swap_exact_input_params,
+    },
+};
 use anchor_lang::prelude::*;
 use anchor_spl::token_interface::{Mint, TokenAccount, TokenInterface};
 #[derive(Accounts)]
@@ -36,31 +44,28 @@ pub struct Swap<'info> {
 
     pub token_program: Interface<'info, TokenInterface>,
 }
+
 pub fn swap_handler(ctx: Context<Swap>, amount_in: u64, min_amount_out: u64) -> Result<()> {
-    
-    require!(amount_in > 0, Error::InvalidSwapAmount);
-    require!(min_amount_out > 0, Error::SwapSlippageExceeded);
+    validate_swap_exact_input_params(amount_in, min_amount_out)?;
 
-    let input_mint = ctx.accounts.user_input_ata.mint;
-    let output_mint = ctx.accounts.user_output_ata.mint;
+    let resolved_swap = resolve_swap_direction_and_reserves(
+        ctx.accounts.user_input_ata.mint,
+        ctx.accounts.user_output_ata.mint,
+        ctx.accounts.token_mint_x.key(),
+        ctx.accounts.token_mint_y.key(),
+        ctx.accounts.vault_x.amount,
+        ctx.accounts.vault_y.amount,
+    )?; 
 
-    require!(input_mint != output_mint, Error::InvalidSwapTokenAccount);
+    let (amount_out, _fee_amount) = compute_swap_output_exact_input(
+        resolved_swap.input_reserve,
+        resolved_swap.output_reserve,
+        amount_in,
+        ctx.accounts.pool.fee_bps,
+    )?;
 
-    let (input_reserve, output_reserve) = if input_mint == ctx.accounts.token_mint_x.key()
-        && output_mint == ctx.accounts.token_mint_y.key()
-    {
-        (ctx.accounts.vault_x.amount, ctx.accounts.vault_y.amount)
-    } else if input_mint == ctx.accounts.token_mint_y.key()
-        && output_mint == ctx.accounts.token_mint_x.key()
-    {
-        (ctx.accounts.vault_y.amount, ctx.accounts.vault_x.amount)
-    } else {
-        return err!(Error::InvalidSwapTokenAccount);
-    };
+    require!(amount_out >= min_amount_out, Error::SwapSlippageExceeded);
 
-    require!(
-        input_reserve > 0 && output_reserve > 0,
-        Error::InvalidPoolLiquidityState
-    );
+
     Ok(())
 }
