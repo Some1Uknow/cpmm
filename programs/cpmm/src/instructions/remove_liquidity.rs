@@ -1,6 +1,9 @@
 use crate::{
-    constants::POOL_SEED, curve::liquidity::compute_withdraw_amounts, errors::Error, state::Pool,
-    utils::transfer_tokens_from_pool,
+    constants::POOL_SEED,
+    curve::liquidity::compute_withdraw_amounts,
+    errors::Error,
+    state::Pool,
+    utils::{burn_tokens_from_user, transfer_tokens_from_pool},
 };
 use anchor_lang::prelude::*;
 use anchor_spl::token_interface::{Mint, TokenAccount, TokenInterface};
@@ -24,6 +27,49 @@ pub fn remove_liquidity_handler(
 
     require!(token_x_out >= min_token_x_out, Error::SlippageExceeded);
     require!(token_y_out >= min_token_y_out, Error::SlippageExceeded);
+
+    let pool_bump = ctx.accounts.pool.bump;
+
+    let token_x_binding = ctx.accounts.token_mint_x.key();
+    let token_y_binding = ctx.accounts.token_mint_y.key();
+
+    let signer_seeds: &[&[u8]] = &[
+        POOL_SEED,
+        token_x_binding.as_ref(),
+        token_y_binding.as_ref(),
+        &[pool_bump],
+    ];
+    let signer = &[signer_seeds];
+
+    burn_tokens_from_user(
+        ctx.accounts.lp_mint.to_account_info(),
+        ctx.accounts.user_lp_mint_ata.to_account_info(),
+        ctx.accounts.signer.to_account_info(),
+        ctx.accounts.token_program.to_account_info(),
+        lp_shares_to_burn,
+    )?;
+
+    transfer_tokens_from_pool(
+        ctx.accounts.vault_x.to_account_info(),
+        ctx.accounts.user_token_x_ata.to_account_info(),
+        ctx.accounts.token_mint_x.to_account_info(),
+        ctx.accounts.pool.to_account_info(),
+        ctx.accounts.token_program.to_account_info(),
+        signer,
+        token_x_out,
+        ctx.accounts.token_mint_x.decimals,
+    )?;
+
+    transfer_tokens_from_pool(
+        ctx.accounts.vault_y.to_account_info(),
+        ctx.accounts.user_token_y_ata.to_account_info(),
+        ctx.accounts.token_mint_y.to_account_info(),
+        ctx.accounts.pool.to_account_info(),
+        ctx.accounts.token_program.to_account_info(),
+        signer,
+        token_y_out,
+        ctx.accounts.token_mint_y.decimals,
+    )?;
 
     Ok(())
 }
