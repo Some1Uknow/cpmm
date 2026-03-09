@@ -80,7 +80,7 @@ pub struct RemoveLiquidity<'info> {
 
     #[account(
         seeds = [POOL_SEED, token_mint_x.key().as_ref(), token_mint_y.key().as_ref()],
-        bump
+        bump = pool.bump
     )]
     pub pool: Account<'info, Pool>,
 
