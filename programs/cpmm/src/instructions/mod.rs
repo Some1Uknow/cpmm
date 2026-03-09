@@ -9,3 +9,4 @@ pub use add_liquidity::*;
 pub use initialize::*;
 pub use initialize_pool::*;
 pub use swap::*;
+pub use remove_liquidity::*;

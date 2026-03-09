@@ -1,4 +1,4 @@
-import { assert } from "chai";
+import { assert, use } from "chai";
 import { BN, web3 } from "@coral-xyz/anchor";
 import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -317,7 +317,7 @@ describe("integration: swap", () => {
       tokenMintX,
       userTokenXAta,
       provider.wallet.publicKey,
-      bootstrapTokenXIn + swapAmountIn,
+      bootstrapTokenXIn,
       [],
       undefined,
       TOKEN_PROGRAM_ID,
@@ -329,7 +329,7 @@ describe("integration: swap", () => {
       tokenMintY,
       userTokenYAta,
       provider.wallet.publicKey,
-      bootstrapTokenYIn,
+      bootstrapTokenYIn + swapAmountIn,
       [],
       undefined,
       TOKEN_PROGRAM_ID,
@@ -357,21 +357,21 @@ describe("integration: swap", () => {
       .signers([payer])
       .rpc();
 
-    const userInputBefore = await getAccount(
+    const userTokenXBefore = await getAccount(
       provider.connection,
       userTokenXAta,
     );
-    const userOutputBefore = await getAccount(
+    const userTokenYBefore = await getAccount(
       provider.connection,
       userTokenYAta,
     );
-    const inputVaultBefore = await getAccount(provider.connection, vaultX);
-    const outputVaultBefore = await getAccount(provider.connection, vaultY);
+    const vaultXBefore = await getAccount(provider.connection, vaultX);
+    const vaultYBefore = await getAccount(provider.connection, vaultY);
 
-    assert.equal(userInputBefore.amount.toString(), "100");
-    assert.equal(userOutputBefore.amount.toString(), "0");
-    assert.equal(inputVaultBefore.amount.toString(), "1000");
-    assert.equal(outputVaultBefore.amount.toString(), "1000");
+    assert.equal(userTokenXBefore.amount.toString(), "0");
+    assert.equal(userTokenYBefore.amount.toString(), "100");
+    assert.equal(vaultXBefore.amount.toString(), "1000");
+    assert.equal(vaultYBefore.amount.toString(), "1000");
 
     await program.methods
       .swap(new BN(swapAmountIn), new BN(minAmountOut))
@@ -380,29 +380,32 @@ describe("integration: swap", () => {
         tokenMintX,
         tokenMintY,
         pool: poolPda,
-        inputVault: vaultX,
-        outputVault: vaultY,
-        inputTokenMint: tokenMintX,
-        outputTokenMint: tokenMintY,
-        userInputAta: userTokenXAta,
-        userOutputAta: userTokenYAta,
+        inputVault: vaultY,
+        outputVault: vaultX,
+        inputTokenMint: tokenMintY,
+        outputTokenMint: tokenMintX,
+        userInputAta: userTokenYAta,
+        userOutputAta: userTokenXAta,
         tokenProgram: TOKEN_PROGRAM_ID,
       })
       .signers([payer])
       .rpc();
 
-    const userInputAfter = await getAccount(provider.connection, userTokenXAta);
-    const userOutputAfter = await getAccount(
+    const userTokenXAfter = await getAccount(
+      provider.connection,
+      userTokenXAta,
+    );
+    const userTokenYAfter = await getAccount(
       provider.connection,
       userTokenYAta,
     );
-    const inputVaultAfterSwap = await getAccount(provider.connection, vaultX);
-    const outputVaultAfterSwap = await getAccount(provider.connection, vaultY);
+    const vaultXAfterSwap = await getAccount(provider.connection, vaultX);
+    const vaultYAfterSwap = await getAccount(provider.connection, vaultY);
 
-    assert.equal(userInputAfter.amount.toString(), "0");
-    assert.equal(userOutputAfter.amount.toString(), "90");
-    assert.equal(inputVaultAfterSwap.amount.toString(), "1100");
-    assert.equal(outputVaultAfterSwap.amount.toString(), "910");
+    assert.equal(userTokenXAfter.amount.toString(), "90");
+    assert.equal(userTokenYAfter.amount.toString(), "0");
+    assert.equal(vaultXAfterSwap.amount.toString(), "910");
+    assert.equal(vaultYAfterSwap.amount.toString(), "1100");
   });
 
   it("swap fails when minimum amount out is set too high", async () => {
@@ -607,4 +610,6 @@ describe("integration: swap", () => {
     assert.equal(inputVaultAfterSwap.amount.toString(), "1000");
     assert.equal(outputVaultAfterSwap.amount.toString(), "1000");
   });
+
+  
 });

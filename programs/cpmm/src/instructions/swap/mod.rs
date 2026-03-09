@@ -1,11 +1,14 @@
+mod checks;
+
+use self::checks::{
+    resolve_swap_direction_and_reserves, validate_swap_exact_input_params,
+};
 use crate::{
     constants::POOL_SEED,
+    curve::swap::compute_swap_output_exact_input,
     errors::Error,
     state::Pool,
-    utils::{
-        compute_swap_output_exact_input, resolve_swap_direction_and_reserves,
-        transfer_tokens_from_pool, transfer_tokens_from_user, validate_swap_exact_input_params,
-    },
+    utils::{transfer_tokens_from_pool, transfer_tokens_from_user},
 };
 use anchor_lang::prelude::*;
 use anchor_spl::token_interface::{Mint, TokenAccount, TokenInterface};

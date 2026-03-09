@@ -1,11 +1,11 @@
 use crate::{
+    constants::POOL_SEED,
+    curve::liquidity::{
+        compute_lp_shares_and_token_deposit_amounts, validate_add_liquidity_inputs,
+    },
     errors::Error,
     state::Pool,
-    utils::{
-        compute_lp_shares_and_token_deposit_amounts, mint_tokens_with_signer,
-        transfer_tokens_from_user, validate_add_liquidity_inputs,
-    },
-    POOL_SEED,
+    utils::{mint_tokens_with_signer, transfer_tokens_from_user},
 };
 use anchor_lang::prelude::*;
 use anchor_spl::token_interface::{Mint, TokenAccount, TokenInterface};

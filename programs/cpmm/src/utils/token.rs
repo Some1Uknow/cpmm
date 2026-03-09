@@ -1,7 +1,5 @@
 use anchor_lang::prelude::*;
-use anchor_spl::token_interface::{
-    self, MintTo, TransferChecked,
-};
+use anchor_spl::token_interface::{self, Burn, MintTo, TransferChecked};
 
 pub fn transfer_tokens_from_user<'info>(
     from: AccountInfo<'info>,
@@ -60,4 +58,21 @@ pub fn mint_tokens_with_signer<'info>(
 
     let cpi_ctx = CpiContext::new_with_signer(token_program, accounts, signer_seeds);
     token_interface::mint_to(cpi_ctx, amount)
+}
+
+pub fn burn_tokens_from_user<'info>(
+    mint: AccountInfo<'info>,
+    from: AccountInfo<'info>,
+    authority: AccountInfo<'info>,
+    token_program: AccountInfo<'info>,
+    amount: u64,
+) -> Result<()> {
+    let accounts = Burn {
+        mint,
+        from,
+        authority,
+    };
+
+    let cpi_ctx = CpiContext::new(token_program, accounts);
+    token_interface::burn(cpi_ctx, amount)
 }

@@ -6,13 +6,10 @@ use anchor_spl::{
 
 use crate::{
     constants::{DISCRIMINATOR_SIZE, POOL_SEED},
+    curve::fees::is_allowed_fee_tier,
     errors::Error,
     state::Pool,
-    utils::{
-        is_allowed_fee_tier,
-        require_canonical_mints,
-        require_pool_vault_invariants,
-    },
+    utils::{require_canonical_mints, require_pool_vault_invariants},
 };
 
 #[derive(Accounts)]
@@ -68,7 +65,6 @@ pub struct InitializePool<'info> {
 }
 
 pub fn initialize_pool_handler(ctx: Context<InitializePool>, fee_bps: u16) -> Result<()> {
-    
     require_canonical_mints(
         ctx.accounts.token_mint_x.key(),
         ctx.accounts.token_mint_y.key(),
