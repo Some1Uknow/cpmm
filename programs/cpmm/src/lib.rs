@@ -16,15 +16,10 @@ pub mod cpmm {
     use super::*;
     use crate::instructions::{
         add_liquidity::{self, AddLiquidity},
-        initialize::{self, Initialize},
         initialize_pool::{self, InitializePool},
+        remove_liquidity::{self, RemoveLiquidity},
         swap::{self, Swap},
     };
-
-    pub fn initialize(ctx: Context<Initialize>) -> Result<()> {
-        initialize::initialize_handler(ctx)
-    }
-
     pub fn initialize_pool(ctx: Context<InitializePool>, fee_bps: u16) -> Result<()> {
         initialize_pool::initialize_pool_handler(ctx, fee_bps)
     }
