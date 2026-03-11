@@ -1,4 +1,4 @@
-import { assert, use } from "chai";
+import { assert } from "chai";
 import { BN, web3 } from "@coral-xyz/anchor";
 import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -610,6 +610,5 @@ describe("integration: swap", () => {
     assert.equal(inputVaultAfterSwap.amount.toString(), "1000");
     assert.equal(outputVaultAfterSwap.amount.toString(), "1000");
   });
-
   
 });
