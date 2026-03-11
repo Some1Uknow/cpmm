@@ -24,5 +24,5 @@ cargo test -p cpmm
 
 2. Full TypeScript test run on LiteSVM
 ```bash
-yarn test
+anchor test
 ```
