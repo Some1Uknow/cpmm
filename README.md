@@ -28,9 +28,26 @@ Not implemented yet:
 - exact-output swap
 - protocol/admin fee collection
 - `update_fee`
-- a real replacement for the default Anchor `initialize` scaffold instruction
 
 ## Design
+
+### `initialize_pool`
+
+```mermaid
+flowchart LR
+    A[Two token mints<br/>BONK and USDC]
+    B[Initialize Pool]
+    C[Create Pool Account]
+    D[Create BONK Vault]
+    E[Create USDC Vault]
+    F[Create LP Token Mint]
+
+    A --> B
+    B --> C
+    B --> D
+    B --> E
+    B --> F
+```
 
 ### 1. Pool Model
 
@@ -51,6 +68,20 @@ Mint ordering is canonical:
 
 This guarantees one deterministic pool PDA per token pair.
 
+### `add_liquidity`
+
+```mermaid
+flowchart LR
+    A[User wallet<br/>1000 Token X<br/>1000 Token Y]
+    B[Add Liquidity]
+    C[Pool vaults receive<br/>1000 Token X<br/>1000 Token Y]
+    D[User receives<br/>1000 LP tokens]
+
+    A --> B
+    B --> C
+    B --> D
+```
+
 ### 2. LP Model
 
 LP tokens represent proportional ownership of pool reserves.
@@ -68,6 +99,22 @@ Non-bootstrap liquidity:
 Remove liquidity:
 
 - burning LP returns the same fraction of both reserves
+
+### `swap`
+
+```mermaid
+flowchart LR
+    A[Pool before<br/>1000 X and 1000 Y]
+    B[User swaps<br/>100 X in]
+    C[Fee on input<br/>30 bps = 0 here]
+    D[User gets<br/>90 Y out]
+    E[Pool after<br/>1100 X and 910 Y]
+
+    A --> B
+    B --> C
+    C --> D
+    D --> E
+```
 
 ### 3. Swap Model
 
@@ -97,6 +144,38 @@ For exact-input swaps:
 - curve math uses the effective post-fee input
 - full input is still transferred into the pool
 - fee stays in pool reserves, benefiting LPs
+
+### `remove_liquidity`
+
+```mermaid
+flowchart LR
+    A[User holds<br/>1000 LP tokens]
+    B[Burn 500 LP]
+    C[User receives<br/>500 Token X<br/>500 Token Y]
+    D[Pool keeps<br/>500 Token X<br/>500 Token Y]
+
+    A --> B
+    B --> C
+    B --> D
+```
+
+## Architecture
+
+```mermaid
+flowchart TD
+    A[User Wallet]
+    B[CPMM Instructions<br/>initialize_pool<br/>add_liquidity<br/>swap<br/>remove_liquidity]
+    C[Pool Account]
+    D[Token X Vault]
+    E[Token Y Vault]
+    F[LP Token Mint]
+
+    A --> B
+    B --> C
+    C --> D
+    C --> E
+    C --> F
+```
 
 ## Math Layout
 
@@ -193,3 +272,21 @@ Run TypeScript integration + smoke tests on LiteSVM:
 ```bash
 yarn test
 ```
+
+## Learning Note
+
+Knowing the architecture is necessary, but not sufficient.
+
+Good engineers do not keep every formula fresh in working memory at all times. What they usually retain is:
+
+- the invariants
+- the shape of the math
+- where the formulas live
+- how to re-derive or verify them quickly
+
+For CPMMs, the bar is not “memorize everything forever.” The real bar is:
+
+- explain the instruction flow cleanly
+- know what each formula is doing
+- re-derive the formula when needed
+- know which pre-state and post-state changes must hold
