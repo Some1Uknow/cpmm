@@ -6,13 +6,16 @@ resolution = true
 skip-lint = false
 
 [programs.localnet]
-cpmm = "CmnAoRD5Vm9PvcoqMecWbBYg6p8AVhkptbHjsXNACys5"
+cpmm = "7L9GVfZFCQwAquHhi2uPYrsMx157NHCyAy8R1NnndrTS"
+
+[programs.devnet]
+cpmm = "7L9GVfZFCQwAquHhi2uPYrsMx157NHCyAy8R1NnndrTS"
 
 [registry]
 url = "https://api.apr.dev"
 
 [provider]
-cluster = "localnet"
+cluster = "devnet"
 wallet = "~/.config/solana/id.json"
 
 [scripts]

@@ -9,7 +9,7 @@ pub mod utils;
 
 pub use instructions::*;
 
-declare_id!("CmnAoRD5Vm9PvcoqMecWbBYg6p8AVhkptbHjsXNACys5");
+declare_id!("7L9GVfZFCQwAquHhi2uPYrsMx157NHCyAy8R1NnndrTS");
 
 #[program]
 pub mod cpmm {

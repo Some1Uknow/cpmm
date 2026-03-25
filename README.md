@@ -9,6 +9,10 @@ This repo implements the core CPMM instruction surface:
 - `swap`
 - `remove_liquidity`
 
+## Devnet
+
+- Program ID: `7L9GVfZFCQwAquHhi2uPYrsMx157NHCyAy8R1NnndrTS`
+
 
 ## Current Status
 
