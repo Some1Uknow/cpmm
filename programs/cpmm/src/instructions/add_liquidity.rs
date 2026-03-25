@@ -89,15 +89,15 @@ pub struct AddLiquidity<'info> {
 
     #[account(
         seeds = [POOL_SEED, token_mint_x.key().as_ref(), token_mint_y.key().as_ref()],
-        bump
+        bump = pool.bump
     )]
-    pub pool: Account<'info, Pool>,
+    pub pool: Box<Account<'info, Pool>>,
 
     #[account(address = pool.token_mint_x)]
-    pub token_mint_x: InterfaceAccount<'info, Mint>,
+    pub token_mint_x: Box<InterfaceAccount<'info, Mint>>,
 
     #[account(address = pool.token_mint_y)]
-    pub token_mint_y: InterfaceAccount<'info, Mint>,
+    pub token_mint_y: Box<InterfaceAccount<'info, Mint>>,
 
     #[account(
         mut,
@@ -106,22 +106,22 @@ pub struct AddLiquidity<'info> {
         mint::token_program = token_program,
         constraint = lp_mint.freeze_authority.is_none() @ Error::InvalidLpMintFreezeAuthority
     )]
-    pub lp_mint: InterfaceAccount<'info, Mint>,
+    pub lp_mint: Box<InterfaceAccount<'info, Mint>>,
 
     #[account(mut, address = pool.vault_x, token::token_program = token_program)]
-    pub vault_x: InterfaceAccount<'info, TokenAccount>,
+    pub vault_x: Box<InterfaceAccount<'info, TokenAccount>>,
 
     #[account(mut, address = pool.vault_y, token::token_program = token_program)]
-    pub vault_y: InterfaceAccount<'info, TokenAccount>,
+    pub vault_y: Box<InterfaceAccount<'info, TokenAccount>>,
 
     #[account(mut, token::mint = token_mint_x, token::authority = signer, token::token_program = token_program)]
-    pub user_token_x_ata: InterfaceAccount<'info, TokenAccount>,
+    pub user_token_x_ata: Box<InterfaceAccount<'info, TokenAccount>>,
 
     #[account(mut, token::mint = token_mint_y, token::authority = signer, token::token_program = token_program)]
-    pub user_token_y_ata: InterfaceAccount<'info, TokenAccount>,
+    pub user_token_y_ata: Box<InterfaceAccount<'info, TokenAccount>>,
 
     #[account(mut, token::mint = lp_mint, token::authority = signer, token::token_program = token_program)]
-    pub user_lp_mint_ata: InterfaceAccount<'info, TokenAccount>,
+    pub user_lp_mint_ata: Box<InterfaceAccount<'info, TokenAccount>>,
 
     pub token_program: Interface<'info, TokenInterface>,
 }
